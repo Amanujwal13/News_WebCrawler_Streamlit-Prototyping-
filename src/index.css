@@ -1,1 +1,67 @@
 @import "tailwindcss";
+
+/* Grabient Teal Nebula Starlight Gradient (32 steps, 180deg)
+   https://grabient.com/kYIRS6IRW_bOdPhGITy36g-HuOv8?steps=32&angle=180
+*/
+:root {
+  --grabient-teal-nebula: linear-gradient(
+    180deg,
+    #030712 0%,
+    #040917 3.23%,
+    #050d1d 6.45%,
+    #071225 9.68%,
+    #0a172d 12.90%,
+    #0d1d36 16.13%,
+    #10233f 19.35%,
+    #122946 22.58%,
+    #142f4e 25.81%,
+    #163556 29.03%,
+    #173c5e 32.26%,
+    #184366 35.48%,
+    #194b6d 38.71%,
+    #185274 41.94%,
+    #175a7a 45.16%,
+    #15617f 48.39%,
+    #146984 51.61%,
+    #147189 54.84%,
+    #167a8e 58.06%,
+    #1a8395 61.29%,
+    #1b8d9d 64.52%,
+    #1a98a6 67.74%,
+    #1ca4af 70.97%,
+    #23b0b8 74.19%,
+    #32bbc1 77.42%,
+    #47c6ca 80.65%,
+    #62d1d3 83.87%,
+    #7fdcdd 87.10%,
+    #9be7e8 90.32%,
+    #b5f1f1 93.55%,
+    #caf9f9 96.77%,
+    #d9ffff 100%
+  );
+}
+
+.bg-teal-nebula {
+  background-image: var(--grabient-teal-nebula);
+}
+
+.bg-teal-nebula-subtle {
+  background: linear-gradient(180deg, #030712 0%, #071225 35%, #0d1d36 70%, #142f4e 100%);
+}
+
+.bg-teal-nebula-card {
+  background: rgba(7, 18, 37, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(20, 105, 132, 0.35);
+}
+
+.bg-teal-nebula-card:hover {
+  border-color: rgba(50, 187, 193, 0.5);
+}
+
+.text-starlight-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #d9ffff 30%, #7fdcdd 65%, #23b0b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
