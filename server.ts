@@ -211,6 +211,7 @@ app.get('/api/python-files', (_req, res) => {
     'pages_data.py',
     'feeds.json',
     'requirements.txt',
+    'ARCHITECTURE.md',
     'tests/test_data.py',
     'tests/test_app.py',
   ];

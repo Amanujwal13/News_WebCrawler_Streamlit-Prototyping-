@@ -466,7 +466,15 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 font-sans pb-16">
+    <div
+      className="min-h-screen text-stone-900 font-sans border border-solid border-black"
+      style={{
+        backgroundColor: '#c2c2bd',
+        borderStyle: 'solid',
+        paddingBottom: '65px',
+        borderColor: '#000000',
+      }}
+    >
       {/* Top Header */}
       <header className="border-b border-stone-200 bg-white sticky top-0 z-30 shadow-xs">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -1005,7 +1013,8 @@ export default function App() {
                 <button
                   onClick={handleDownloadCsv}
                   disabled={filteredItems.length === 0}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-stone-900 hover:bg-stone-800 disabled:bg-stone-200 disabled:text-stone-400 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-4 py-2 hover:bg-stone-800 disabled:bg-stone-200 disabled:text-stone-400 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  style={{ backgroundColor: '#000000' }}
                 >
                   <Download className="w-3.5 h-3.5" />
                   Download CSV ({filteredItems.length} rows)
@@ -1013,7 +1022,8 @@ export default function App() {
                 <button
                   onClick={handleDownloadJson}
                   disabled={filteredItems.length === 0}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-stone-900 hover:bg-stone-800 disabled:bg-stone-200 disabled:text-stone-400 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-4 py-2 hover:bg-stone-800 disabled:bg-stone-200 disabled:text-stone-400 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  style={{ backgroundColor: '#000000' }}
                 >
                   <Download className="w-3.5 h-3.5" />
                   Download JSON ({filteredItems.length} rows)
@@ -1021,7 +1031,8 @@ export default function App() {
                 <button
                   onClick={handleDownloadExcel}
                   disabled={filteredItems.length === 0}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-stone-900 hover:bg-stone-800 disabled:bg-stone-200 disabled:text-stone-400 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-4 py-2 hover:bg-stone-800 disabled:bg-stone-200 disabled:text-stone-400 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  style={{ backgroundColor: '#000000' }}
                 >
                   <Download className="w-3.5 h-3.5" />
                   Download Excel ({filteredItems.length} rows)
