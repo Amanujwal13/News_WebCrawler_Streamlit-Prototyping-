@@ -1,0 +1,13 @@
+[
+  "tests/test_app.py::test_app_collect_mock",
+  "tests/test_app.py::test_app_first_load",
+  "tests/test_data.py::test_category_counts",
+  "tests/test_data.py::test_load_site_catalog_with_help_keys_and_invalid",
+  "tests/test_data.py::test_safe_link",
+  "tests/test_data.py::test_selected_feeds_ordering_and_empty",
+  "tests/test_data.py::test_site_summary_status_rules",
+  "tests/test_data.py::test_to_csv_bytes_escaping",
+  "tests/test_data.py::test_to_dataframe_and_apply_filters",
+  "tests/test_data.py::test_to_excel_bytes_sheets_and_column_width",
+  "tests/test_data.py::test_to_json_bytes_roundtrip"
+]

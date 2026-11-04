@@ -1,0 +1,6 @@
+{
+  "name": "News Collector",
+  "description": "Curated RSS news headline collector with live multi-site fetching, filterable preview table, category breakdown, and export to CSV, JSON, and Excel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
