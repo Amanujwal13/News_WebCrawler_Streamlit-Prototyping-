@@ -1,4 +1,10 @@
-"""Data processing and export functions for news headline collection."""
+"""Data processing and export functions for news headline collection.
+
+Features:
+- Streamlit caching compatibility (@st.cache_data).
+- Strict link sanitization and datetime parsing.
+- In-memory Excel, CSV (UTF-8 BOM), and JSON serialization.
+"""
 
 from __future__ import annotations
 
@@ -9,10 +15,12 @@ from pathlib import Path
 from typing import Any
 import openpyxl
 import pandas as pd
+import streamlit as st
 
 
+@st.cache_data(show_spinner=False)
 def load_site_catalog(path: str | Path) -> dict[str, list[str]]:
-    """Read feeds.json, drop keys starting with '_', and return site names to feed URLs.
+    """Read feeds.json, drop keys starting with '_', and return site names mapped to feed URLs.
 
     Returns an empty dictionary if the file is missing or invalid.
     """
@@ -25,9 +33,9 @@ def load_site_catalog(path: str | Path) -> dict[str, list[str]]:
         if not isinstance(data, dict):
             return {}
         return {
-            k: [str(u) for u in v]
+            str(k): [str(u) for u in v]
             for k, v in data.items()
-            if not k.startswith("_") and isinstance(v, list)
+            if not str(k).startswith("_") and isinstance(v, list)
         }
     except Exception:
         return {}
@@ -46,8 +54,10 @@ def selected_feeds(
     }
 
 
-def site_summary(run_log: list[str], catalog: dict[str, list[str]]) -> list[dict[str, Any]]:
-    """Turn collector log lines into one summary row per site in the catalog."""
+def site_summary(
+    run_log: list[str], catalog: dict[str, list[str]]
+) -> list[dict[str, Any]]:
+    """Transform collector log lines into structured status summaries per catalog site."""
     summary: list[dict[str, Any]] = []
 
     for site, urls in catalog.items():
@@ -76,7 +86,7 @@ def site_summary(run_log: list[str], catalog: dict[str, list[str]]) -> list[dict
 
         has_ok = any(l.startswith("OK:") for l in site_logs)
         has_warn = any(l.startswith("WARN:") for l in site_logs)
-        has_fail = any(l.startswith("FAIL:") for l in site_logs)
+        has_fail = any(l.startswith("FAIL:") or l.startswith("SECURITY:") for l in site_logs)
         has_skip = any(l.startswith("SKIP:") for l in site_logs)
 
         success = has_ok or has_warn
@@ -99,8 +109,9 @@ def site_summary(run_log: list[str], catalog: dict[str, list[str]]) -> list[dict
     return summary
 
 
+@st.cache_data(show_spinner=False)
 def to_dataframe(items: list[dict[str, Any]]) -> pd.DataFrame:
-    """Convert item dictionaries to a DataFrame with standardized columns and datetime parsing."""
+    """Convert item dictionaries to a normalized DataFrame with robust datetime parsing."""
     expected_cols = ["category", "source", "title", "published", "link"]
     if not items:
         return pd.DataFrame(columns=expected_cols)
@@ -111,9 +122,10 @@ def to_dataframe(items: list[dict[str, Any]]) -> pd.DataFrame:
             df[col] = ""
 
     raw_published = df["published"].astype(str).copy()
-    parsed_dates = pd.to_datetime(df["published"], errors="coerce")
+    # utc=True normalises mixed offsets (UTC, -05:00, naive) to a single tz-aware dtype
+    parsed_dates = pd.to_datetime(df["published"], errors="coerce", utc=True)
 
-    # If parsing failed for any non-empty published value, store raw in published_text
+    # If parsing failed for any non-empty published value, retain raw text in published_text
     failed_mask = parsed_dates.isna() & (raw_published.str.strip() != "")
     if failed_mask.any():
         df["published_text"] = raw_published
@@ -132,7 +144,7 @@ def apply_filters(
     date_from: datetime.date | datetime.datetime | str | None = None,
     date_to: datetime.date | datetime.datetime | str | None = None,
 ) -> pd.DataFrame:
-    """Filter DataFrame by category, case-insensitive title text, and date range."""
+    """Filter DataFrame by category, sanitized keyword search, and datetime range."""
     if df.empty:
         return df.copy()
 
@@ -142,21 +154,34 @@ def apply_filters(
 
     if text and text.strip():
         search_term = text.strip().lower()
-        filtered = filtered[filtered["title"].astype(str).str.lower().str.contains(search_term, regex=False)]
+        filtered = filtered[
+            filtered["title"].astype(str).str.lower().str.contains(search_term, regex=False)
+        ]
 
     if date_from is not None or date_to is not None:
-        # Rows with unparseable dates are removed when date range is set
         filtered = filtered[filtered["published"].notna()]
 
         if date_from is not None:
-            d_from = date_from.date() if isinstance(date_from, datetime.datetime) else (
-                datetime.date.fromisoformat(str(date_from)) if isinstance(date_from, str) else date_from
+            d_from = (
+                date_from.date()
+                if isinstance(date_from, datetime.datetime)
+                else (
+                    datetime.date.fromisoformat(str(date_from))
+                    if isinstance(date_from, str)
+                    else date_from
+                )
             )
             filtered = filtered[filtered["published"].dt.date >= d_from]
 
         if date_to is not None:
-            d_to = date_to.date() if isinstance(date_to, datetime.datetime) else (
-                datetime.date.fromisoformat(str(date_to)) if isinstance(date_to, str) else date_to
+            d_to = (
+                date_to.date()
+                if isinstance(date_to, datetime.datetime)
+                else (
+                    datetime.date.fromisoformat(str(date_to))
+                    if isinstance(date_to, str)
+                    else date_to
+                )
             )
             filtered = filtered[filtered["published"].dt.date <= d_to]
 
@@ -164,7 +189,7 @@ def apply_filters(
 
 
 def category_counts(df: pd.DataFrame) -> pd.DataFrame:
-    """Return category counts sorted in descending order."""
+    """Compute category counts sorted in descending frequency order."""
     if df.empty or "category" not in df.columns:
         return pd.DataFrame(columns=["category", "count"])
 
@@ -173,14 +198,16 @@ def category_counts(df: pd.DataFrame) -> pd.DataFrame:
     return counts.sort_values(by="count", ascending=False).reset_index(drop=True)
 
 
+@st.cache_data(show_spinner=False)
 def to_csv_bytes(df: pd.DataFrame) -> bytes:
-    """Export DataFrame to CSV bytes with UTF-8 BOM without index column."""
+    """Export DataFrame to CSV bytes with UTF-8 BOM encoding."""
     output = df.to_csv(index=False)
     return output.encode("utf-8-sig")
 
 
+@st.cache_data(show_spinner=False)
 def to_json_bytes(df: pd.DataFrame) -> bytes:
-    """Export DataFrame to JSON array bytes with indentation and ISO dates."""
+    """Export DataFrame to UTF-8 formatted JSON array bytes."""
     if df.empty:
         return b"[]"
     json_str = df.to_json(
@@ -192,16 +219,21 @@ def to_json_bytes(df: pd.DataFrame) -> bytes:
     return json_str.encode("utf-8")
 
 
+@st.cache_data(show_spinner=False)
 def to_excel_bytes(
     df: pd.DataFrame,
     site_summary_data: list[dict[str, Any]] | None = None,
 ) -> bytes:
-    """Build an in-memory Excel workbook with 'headlines' and 'sites' sheets."""
+    """Construct an in-memory multi-sheet Excel workbook with headlines and site telemetry."""
     wb = openpyxl.Workbook()
     ws_headlines = wb.active
     ws_headlines.title = "headlines"
 
-    columns = list(df.columns) if not df.empty else ["category", "source", "title", "published", "link"]
+    columns = (
+        list(df.columns)
+        if not df.empty
+        else ["category", "source", "title", "published", "link"]
+    )
     ws_headlines.append(columns)
 
     title_col_letter = "C"
@@ -212,7 +244,7 @@ def to_excel_bytes(
 
     if not df.empty:
         for row in df.itertuples(index=False):
-            clean_row = []
+            clean_row: list[str] = []
             for val in row:
                 if pd.isna(val):
                     clean_row.append("")
@@ -238,7 +270,10 @@ def to_excel_bytes(
 
 
 def safe_link(url: str | None) -> str | None:
-    """Return URL only if it starts with http:// or https://, otherwise None."""
+    """Validate that URL strictly uses http:// or https:// protocol.
+    
+    Returns URL string if safe, otherwise None to prevent XSS or protocol hijacking.
+    """
     if not url or not isinstance(url, str):
         return None
     url_stripped = url.strip()

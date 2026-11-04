@@ -1,8 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing and cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments and secrets
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# Node / Frontend
 node_modules/
-build/
 dist/
-coverage/
 .DS_Store
-*.log
-.env*
-!.env.example
+Thumbs.db
+
