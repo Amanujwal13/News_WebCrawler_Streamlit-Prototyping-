@@ -135,6 +135,18 @@ tests/test_data.py::test_safe_link PASSED
 
 ---
 
+## Hosting on GitHub Pages
+
+This repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) to automatically build and host the web application on GitHub Pages:
+
+1. Push your repository to GitHub (`main` or `master` branch).
+2. Go to **Settings** → **Pages** in your GitHub repository.
+3. Under **Build and deployment** → **Source**, select **GitHub Actions**.
+4. The workflow will automatically trigger on push and publish your site at:
+   `https://<your-username>.github.io/<your-repo-name>/`
+
+---
+
 ## License & Usage
 
 For personal and research use. Check individual news publisher terms of service and syndication guidelines before redistributing collected headlines.
