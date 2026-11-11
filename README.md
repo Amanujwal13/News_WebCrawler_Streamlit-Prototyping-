@@ -1,153 +1,128 @@
-# News Collector & Web Crawler
+# News Collector & Web Engine
 
-A resilient, production-ready news aggregator built with **Streamlit**, **Python 3.12**, and **Feedparser**. The application crawls, sanitizes, and categorizes RSS and Atom feeds across curated publisher sources with built-in SSRF protection, per-domain rate limiting, timezone-normalized datetime parsing, and multi-format export capabilities.
-
----
-
-## Features
-
-- **Curated Multi-Publisher Feed Ingestion**: Read feeds dynamically configured in `feeds.json`.
-- **SSRF Protection & Defensive Networking**: Every feed URL undergoes strict protocol checks (`http`/`https`) and DNS resolution against RFC 1918 private subnets, loopback, link-local, and cloud metadata targets (`169.254.169.254`, `metadata.google.internal`).
-- **Polite Domain-Level Throttling**: Requests are grouped by publisher hostname. Network requests run concurrently across different domains using `ThreadPoolExecutor`, while inter-request delays apply strictly per host to avoid triggering HTTP 429 rate limits.
-- **Robust Timezone Normalization**: Automatically unifies mixed RSS timestamp formats (UTC, ISO-8601 with positive/negative offsets, and naive datetimes) to UTC via `pd.to_datetime(..., utc=True)`.
-- **Interactive Streamlit Interface**:
-  - **Step 1 — Choose Sites**: Dynamic 3-column site selector with **Select All** and **Clear** helpers, request delay slider (0–5s), and optional auto-refresh.
-  - **Step 2 — Collection Execution**: Live progress bar and detailed execution status log.
-  - **Step 3 — Filter & Preview**: Multi-select category filtering, keyword title search, single-day and date-range picker, and headline deduplication toggle.
-  - **Step 4 — Multi-Format Export**: One-click in-memory download of filtered results as **CSV (UTF-8 BOM)**, **JSON**, or formatted **Excel (.xlsx)** with auto-sized columns and telemetry sheets.
-- **Automated Verification**: Comprehensive test suite including unit tests and headless Streamlit `AppTest` integration tests.
+A modern, high-performance news aggregator and intelligence pipeline built entirely in **React 19 + TypeScript + Vite + Tailwind CSS** with a native **Node.js / Express** crawling backend. The application aggregates, normalizes, and categorizes RSS and Atom feeds across curated publisher sources with built-in SSRF protection, host-level throttling, real-time preview filters, and instant in-memory multi-format downloads (CSV, JSON, and Excel).
 
 ---
 
-## Project Structure
+## 🖼️ Front Page & Design Reference
+
+![News Collector Front Page Preview](public/front_page_preview.jpg)
+
+### Front Page Architecture:
+1. **Sticky Glass Navbar**:
+   - Frosted backdrop blur (`bg-[#030712]/85`) with glowing brand badge.
+   - Quick navigation links (`#features`, `#collector`) and instant toggle for the real-time execution log.
+2. **Hero Section & Dynamic Canvas Headline**:
+   - Live badge with pulsing cyan indicator.
+   - Dynamic HTML5 Canvas headline (*"News to Database / Feed your AI models.."*) rendering continuous sine-wave bezier curves clipped directly over typography.
+   - Direct call-to-actions scrolling to the collector workspace or jumping to live logs.
+3. **Feature Pillars**:
+   - Glassmorphic feature cards detailing verified feeds (`feeds.json`), SSRF defense layers, and in-memory multi-format exports.
+4. **Interactive Collector Workspace**:
+   - **Step 1 — Choose Sites**: Multi-source checklist with feed counter, Select All / Clear, custom site addition modal, and polite delay slider.
+   - **Step 2 — Collect Execution**: Physics-based wave pulse loader (`LoaderOne`) with real-time progress indicators.
+   - **Step 3 — Preview & Filtering**: Live metrics counters, site health summary, keyword search, date range pickers, and active category tags.
+   - **Step 4 — In-Memory Export**: Direct browser downloads for UTF-8 CSV, structured JSON, and auto-column-width Excel files (`.xlsx`).
+5. **Execution Log Workspace**:
+   - Live streaming terminal log detailing host connections, feed parsing status, throttling intervals, and normalized entry counts.
+
+---
+
+## 🔤 Typography & Font Reference
+
+The web application utilizes Google Fonts linked in the HTML entry point:
+
+| Role | Font Family | Weights | Reference Link |
+| :--- | :--- | :--- | :--- |
+| **Primary UI & Headings** | **Plus Jakarta Sans** | 400, 500, 600, 700, 800 | [Google Fonts — Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) |
+| **Code, Tables & Terminals** | **JetBrains Mono** | 400, 500 | [Google Fonts — JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) |
+
+---
+
+## 🌌 Color Palette Reference
+
+The front page implements the **32-Step Teal Nebula Starlight Gradient (180°)**:
+- **Reference URL**: [Grabient — Teal Nebula Starlight Gradient](https://grabient.com/kYIRS6IRW_bOdPhGITy36g-HuOv8?steps=32&angle=180)
+- **Angle**: `180deg` (Linear top-to-bottom)
+- **Key Color Stops**:
+  - `0%` Deep Midnight Black: `#030712`
+  - `16%` Dark Indigo / Deep Ocean: `#0d1d36`
+  - `26%` Slate Cyan Navy: `#142f4e`
+  - `52%` Ocean Teal: `#146984`
+  - `74%` Vivid Cyan: `#23b0b8`
+  - `77%` Aqua Marine: `#32bbc1`
+  - `87%` Luminous Teal: `#7fdcdd`
+  - `100%` Pale Starlight Cyan: `#d9ffff`
+
+---
+
+## 📁 Project Structure
 
 ```text
-News_WebCrawler_Streamlit/
-├── ARCHITECTURE.md                  # Detailed architectural specification & design choices
-├── feeds.json                       # Catalog of news sources and their RSS/Atom endpoints
-├── app.py                           # Streamlit web application & user workflow UI
-├── news_crawler.py                  # Networking engine, SSRF checks, domain worker pool
-├── pages_data.py                    # Caching, dataframe normalization, filters & exporters
-├── requirements.txt                 # Python dependencies
-└── tests/
-    ├── test_app.py                  # Streamlit AppTest integration & UI interaction tests
-    └── test_data.py                 # Data parsing, filtering, link sanitization & export tests
+News_Collector/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml               # Automated GitHub Pages CI/CD workflow
+├── public/
+│   ├── feeds.json                   # Verified publisher RSS/Atom feeds catalog
+│   └── front_page_preview.jpg       # Front page design visual reference
+├── src/
+│   ├── components/
+│   │   └── ui/
+│   │       ├── canvas-text.tsx      # Canvas-rendered bezier wave headline animation
+│   │       └── loader.tsx           # Physics wave pulse loader animation (LoaderOne)
+│   ├── lib/
+│   │   └── utils.ts                 # Classname merge utility (clsx + twMerge)
+│   ├── App.tsx                      # Modern React front page & collector workspace
+│   ├── index.css                    # Tailwind CSS v4 & Grabient utility classes
+│   └── main.tsx                     # Vite React entry point
+├── server.ts                        # Express API server with native TypeScript RSS/Atom crawler
+├── package.json                     # Node.js dependencies & build scripts
+├── vite.config.ts                   # Vite configuration
+├── ARCHITECTURE.md                  # Comprehensive technical architecture documentation
+└── README.md                        # Project documentation & reference
 ```
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
+- **Node.js 20+** and **npm**
 
-- **Python 3.12+** installed on your system.
-- Standard tools: `pip` and `git`.
-
-### Installation
-
-1. Navigate to the application directory:
-   ```bash
-   cd News_WebCrawler_Streamlit
-   ```
-
-2. Create and activate a virtual environment (optional but recommended):
-   ```bash
-   python -m venv .venv
-   # Windows:
-   .venv\Scripts\activate
-   # macOS / Linux:
-   source .venv/bin/activate
-   ```
-
-3. Install required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-   *(Optional)* To enable the automated interval refresh dropdown:
-   ```bash
-   pip install streamlit-autorefresh==1.0.1
-   ```
-
----
-
-## Running the Application
-
-Launch the Streamlit app locally:
-
+### 1. Install Dependencies
 ```bash
-cd News_WebCrawler_Streamlit
-streamlit run app.py
+npm install
 ```
 
-The app will open automatically in your browser at `http://localhost:8501`.
-
----
-
-## Managing Feed Sources
-
-Publishers and feeds are configured in `News_WebCrawler_Streamlit/feeds.json`. Keys starting with an underscore `_` are treated as documentation/comments and ignored by the crawler.
-
-```json
-{
-  "_comment": "Add news publishers and their RSS endpoints below",
-  "BBC News": [
-    "https://feeds.bbci.co.uk/news/rss.xml",
-    "https://feeds.bbci.co.uk/news/technology/rss.xml"
-  ],
-  "Reuters": [
-    "https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best"
-  ],
-  "Custom Outlet": []
-}
-```
-
-> **Note:** Any site with an empty array `[]` will automatically render as disabled with a note in the UI (`(no feed URLs in feeds.json)`).
-
----
-
-## Running Tests
-
-Run the automated test suite with `pytest`:
-
+### 2. Start Development Server
 ```bash
-cd News_WebCrawler_Streamlit
-pytest tests/ -v
+npm run dev
 ```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Expected output:
-```text
-tests/test_app.py::test_app_first_load PASSED
-tests/test_app.py::test_app_site_selection_synchronization PASSED
-tests/test_app.py::test_app_collect_mock_and_metrics PASSED
-tests/test_app.py::test_ssrf_url_validation PASSED
-tests/test_data.py::test_load_site_catalog_with_help_keys_and_invalid PASSED
-tests/test_data.py::test_selected_feeds_ordering_and_empty PASSED
-tests/test_data.py::test_site_summary_status_rules PASSED
-tests/test_data.py::test_to_dataframe_and_apply_filters PASSED
-tests/test_data.py::test_category_counts PASSED
-tests/test_data.py::test_to_csv_bytes_escaping PASSED
-tests/test_data.py::test_to_json_bytes_roundtrip PASSED
-tests/test_data.py::test_to_excel_bytes_sheets_and_column_width PASSED
-tests/test_data.py::test_safe_link PASSED
-============================== 13 passed in 7.85s ==============================
+### 3. Production Build
+```bash
+npm run build
 ```
 
 ---
 
-## Hosting on GitHub Pages
+## 🌐 Hosting on GitHub Pages
 
-This repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) to automatically build and host the web application on GitHub Pages:
+The repository contains an automated GitHub Actions deployment workflow (`.github/workflows/deploy.yml`):
 
-1. Push your repository to GitHub (`main` or `master` branch).
-2. Go to **Settings** → **Pages** in your GitHub repository.
+1. Push your repository to GitHub on `main` or `master`.
+2. Navigate to **Settings** → **Pages** in your GitHub repository.
 3. Under **Build and deployment** → **Source**, select **GitHub Actions**.
-4. The workflow will automatically trigger on push and publish your site at:
-   `https://<your-username>.github.io/<your-repo-name>/`
+4. The workflow will automatically compile the application and publish it to:
+   ```text
+   https://<your-username>.github.io/<your-repo-name>/
+   ```
+   *(The client build includes static fallbacks for `feeds.json` and client-side dataset exploration).*
 
 ---
 
-## License & Usage
+## 📄 License & Usage
 
-For personal and research use. Check individual news publisher terms of service and syndication guidelines before redistributing collected headlines.
-
+For research and analytical workflows. Respect individual publisher terms of service and RSS syndication rate limits when deploying automated scrapers.

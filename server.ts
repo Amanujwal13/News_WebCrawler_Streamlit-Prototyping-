@@ -2,10 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 
-const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -62,10 +59,9 @@ app.post('/api/catalog', (req, res) => {
     }
     const output = { ...existingMeta, ...catalog };
     fs.writeFileSync(currentPath, JSON.stringify(output, null, 2), 'utf-8');
-    // Also sync to news_crawler/feeds.json if exists
-    const subPath = path.join(__dirname, 'news_crawler', 'feeds.json');
-    if (fs.existsSync(path.dirname(subPath))) {
-      fs.writeFileSync(subPath, JSON.stringify(output, null, 2), 'utf-8');
+    const publicPath = path.join(__dirname, 'public', 'feeds.json');
+    if (fs.existsSync(path.dirname(publicPath))) {
+      fs.writeFileSync(publicPath, JSON.stringify(output, null, 2), 'utf-8');
     }
     res.json({ success: true, catalog });
   } catch (err: any) {
@@ -201,40 +197,6 @@ app.post('/api/collect', async (req, res) => {
   }
 
   res.json({ items, run_log: runLog });
-});
-
-// API: Get python source files
-app.get('/api/python-files', (_req, res) => {
-  const fileNames = [
-    'app.py',
-    'news_crawler.py',
-    'pages_data.py',
-    'feeds.json',
-    'requirements.txt',
-    'ARCHITECTURE.md',
-    'tests/test_data.py',
-    'tests/test_app.py',
-  ];
-  const files: Record<string, string> = {};
-  for (const file of fileNames) {
-    const fullPath = path.join(__dirname, file);
-    if (fs.existsSync(fullPath)) {
-      files[file] = fs.readFileSync(fullPath, 'utf-8');
-    }
-  }
-  res.json({ files });
-});
-
-// API: Run python tests
-app.post('/api/run-tests', async (_req, res) => {
-  try {
-    const { stdout, stderr } = await execAsync('PYTHONPATH=. /root/.local/bin/pytest tests/ -v', {
-      cwd: __dirname,
-    });
-    res.json({ success: true, output: stdout || stderr });
-  } catch (err: any) {
-    res.json({ success: false, output: err.stdout || err.stderr || err.message });
-  }
 });
 
 // Mount Vite or static server

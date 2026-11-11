@@ -24,7 +24,6 @@ import {
   XCircle,
   FileText,
   Database,
-  Code2,
   Terminal,
   Plus,
   Play,
@@ -132,11 +131,7 @@ export default function App() {
   const [dateTo, setDateTo] = useState<string>('');
 
   // View tabs
-  const [activeTab, setActiveTab] = useState<'app' | 'python_code' | 'logs'>('app');
-  const [pythonFiles, setPythonFiles] = useState<Record<string, string>>({});
-  const [activePythonFile, setActivePythonFile] = useState<string>('app.py');
-  const [testOutput, setTestOutput] = useState<string | null>(null);
-  const [isRunningTests, setIsRunningTests] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'app' | 'logs'>('app');
 
   // New site modal
   const [showAddSiteModal, setShowAddSiteModal] = useState<boolean>(false);
@@ -202,24 +197,6 @@ export default function App() {
             applyCatalogData(cleanCatalog);
           })
           .catch(err => console.error('Failed to load static feeds.json:', err));
-      });
-
-    fetch('/api/python-files')
-      .then(res => {
-        if (!res.ok) throw new Error('Python API not available');
-        return res.json();
-      })
-      .then(data => {
-        if (data && data.files) {
-          setPythonFiles(data.files);
-        }
-      })
-      .catch(() => {
-        // Fallback placeholder for static preview
-        setPythonFiles({
-          'app.py': '# Run locally with full Python backend:\n# pip install -r requirements.txt\n# streamlit run app.py\n\nimport streamlit as st\n\nst.set_page_config(page_title="News Collector", layout="wide")\nst.title("News Collector")\nst.info("Host full-stack with server.ts or run app.py locally with Streamlit.")',
-          'feeds.json': '{\n  "BBC News": ["https://feeds.bbci.co.uk/news/rss.xml"],\n  "Hacker News": ["https://news.ycombinator.com/rss"],\n  "TechCrunch": ["https://techcrunch.com/feed/"]\n}'
-        });
       });
   }, []);
 
@@ -469,21 +446,6 @@ export default function App() {
     XLSX.writeFile(wb, `headlines_${getTimestamp()}.xlsx`);
   };
 
-  // Run live pytest test suite
-  const handleRunPytest = async () => {
-    setIsRunningTests(true);
-    setTestOutput('Running pytest tests/ -v ...');
-    try {
-      const res = await fetch('/api/run-tests', { method: 'POST' });
-      const data = await res.json();
-      setTestOutput(data.output || 'Completed with no output.');
-    } catch (err: any) {
-      setTestOutput(`Error running tests: ${err.message}`);
-    } finally {
-      setIsRunningTests(false);
-    }
-  };
-
   // Add new site to feeds.json
   const handleAddSite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -577,16 +539,13 @@ export default function App() {
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-cyan-100/75">
             <a href="#features" className="hover:text-[#d9ffff] transition-colors">Features</a>
-            <a href="#collector" className="hover:text-[#d9ffff] transition-colors">Collector</a>
-            <button
-              onClick={() => {
-                setActiveTab('python_code');
-                scrollToCollector();
-              }}
-              className="hover:text-[#d9ffff] transition-colors cursor-pointer"
+            <a
+              href="#collector"
+              onClick={() => setActiveTab('app')}
+              className="hover:text-[#d9ffff] transition-colors"
             >
-              Python Engine
-            </button>
+              Collector
+            </a>
             <button
               onClick={() => {
                 setActiveTab('logs');
@@ -599,15 +558,6 @@ export default function App() {
           </nav>
 
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => {
-                setActiveTab('python_code');
-                scrollToCollector();
-              }}
-              className="text-sm font-medium text-cyan-100/75 hover:text-[#d9ffff] transition-colors hidden sm:block cursor-pointer"
-            >
-              Docs & Tests
-            </button>
             <button
               onClick={scrollToCollector}
               className="bg-gradient-to-r from-[#146984] via-[#1ca4af] to-[#32bbc1] text-[#030712] text-sm font-bold px-4 py-2 rounded-full hover:brightness-110 transition-all cursor-pointer shadow-[0_0_15px_rgba(50,187,193,0.3)] active:scale-95"
@@ -658,12 +608,13 @@ export default function App() {
             </button>
             <button
               onClick={() => {
-                setActiveTab('python_code');
+                setActiveTab('logs');
                 scrollToCollector();
               }}
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#071225]/70 text-[#d9ffff] text-base font-medium px-8 py-3.5 rounded-full border border-[#1ca4af]/40 hover:bg-[#0d1d36] hover:border-[#32bbc1] transition-all active:scale-95 cursor-pointer backdrop-blur-sm"
             >
-              Read the docs & run tests
+              <Terminal className="w-4 h-4 text-[#32bbc1]" />
+              View execution logs
             </button>
           </div>
         </section>
@@ -740,17 +691,6 @@ export default function App() {
               >
                 <Layers className="w-3.5 h-3.5" />
                 Collector App
-              </button>
-              <button
-                onClick={() => setActiveTab('python_code')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'python_code'
-                    ? 'bg-gradient-to-r from-[#146984] to-[#1ca4af] text-white shadow-xs'
-                    : 'text-cyan-100/70 hover:text-white'
-                }`}
-              >
-                <Code2 className="w-3.5 h-3.5" />
-                Python Files & Tests
               </button>
               <button
                 onClick={() => setActiveTab('logs')}
@@ -1318,82 +1258,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: Python Code & Tests */}
-        {activeTab === 'python_code' && (
-          <div className="space-y-6">
-            <div className="bg-teal-nebula-card rounded-xl border border-[#146984]/40 p-5 shadow-xl text-white">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#142f4e]/60 gap-3">
-                <div>
-                  <h2 className="text-base font-semibold text-[#d9ffff]">Python Project Files & Local CLI</h2>
-                  <p className="text-xs text-[#caf9f9]/70 mt-0.5">
-                    Streamlit application (<code className="text-[#32bbc1]">app.py</code>), crawler module, data layer, and pytest test suite.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleRunPytest}
-                    disabled={isRunningTests}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#146984] to-[#23b0b8] hover:brightness-110 text-white text-xs font-semibold rounded-md shadow-xs transition-colors cursor-pointer"
-                  >
-                    <Terminal className="w-3.5 h-3.5" />
-                    {isRunningTests ? 'Running pytest...' : 'Run pytest suite'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Instructions on how to run locally */}
-              <div className="mt-4 p-3.5 bg-[#030712] border border-[#142f4e] text-slate-200 rounded-lg text-xs font-mono space-y-1">
-                <div className="text-[#7fdcdd]"># Run the functional Streamlit app locally:</div>
-                <div className="text-white">pip install -r requirements.txt</div>
-                <div className="text-[#32bbc1]">streamlit run app.py</div>
-              </div>
-
-              {testOutput && (
-                <div className="mt-4 p-4 bg-[#030712] border border-[#142f4e] text-emerald-400 rounded-lg font-mono text-xs overflow-x-auto whitespace-pre">
-                  {testOutput}
-                </div>
-              )}
-
-              {/* File switcher */}
-              <div className="mt-6">
-                <div className="flex items-center gap-1 border-b border-[#142f4e] overflow-x-auto pb-px">
-                  {Object.keys(pythonFiles).map(fileName => (
-                    <button
-                      key={fileName}
-                      onClick={() => setActivePythonFile(fileName)}
-                      className={`px-3 py-2 text-xs font-mono font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
-                        activePythonFile === fileName
-                          ? 'border-[#32bbc1] text-[#d9ffff] bg-[#0d1d36]/80'
-                          : 'border-transparent text-[#caf9f9]/60 hover:text-white'
-                      }`}
-                    >
-                      {fileName}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="relative mt-2">
-                  <pre className="p-4 bg-[#030712] border border-[#142f4e] text-[#d9ffff] rounded-lg text-xs font-mono overflow-x-auto max-h-[500px] leading-relaxed">
-                    {pythonFiles[activePythonFile] || '# File empty or loading...'}
-                  </pre>
-                  <button
-                    onClick={() => {
-                      if (pythonFiles[activePythonFile]) {
-                        navigator.clipboard.writeText(pythonFiles[activePythonFile]);
-                      }
-                    }}
-                    className="absolute top-3 right-3 px-2 py-1 bg-[#146984]/50 hover:bg-[#146984] text-[#d9ffff] border border-[#1ca4af]/40 text-[11px] rounded font-sans transition-colors cursor-pointer"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: Run Log */}
+        {/* TAB 2: Run Log */}
         {activeTab === 'logs' && (
           <div className="bg-teal-nebula-card rounded-xl border border-[#146984]/40 p-5 shadow-xl text-white">
             <h2 className="text-base font-semibold text-[#d9ffff] pb-2">Collector Run Log</h2>
