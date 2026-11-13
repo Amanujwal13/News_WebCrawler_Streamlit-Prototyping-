@@ -108,21 +108,6 @@ npm run build
 
 ---
 
-## 🌐 Hosting on GitHub Pages
-
-The repository contains an automated GitHub Actions deployment workflow (`.github/workflows/deploy.yml`):
-
-1. Push your repository to GitHub on `main` or `master`.
-2. Navigate to **Settings** → **Pages** in your GitHub repository.
-3. Under **Build and deployment** → **Source**, select **GitHub Actions**.
-4. The workflow will automatically compile the application and publish it to:
-   ```text
-   https://<your-username>.github.io/<your-repo-name>/
-   ```
-   *(The client build includes static fallbacks for `feeds.json` and client-side dataset exploration).*
-
----
-
 ## 📄 License & Usage
 
 For research and analytical workflows. Respect individual publisher terms of service and RSS syndication rate limits when deploying automated scrapers.
